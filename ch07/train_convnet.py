@@ -45,7 +45,7 @@ plt.plot(x, trainer.train_acc_list, marker='o', label='train', markevery=2)
 plt.plot(x, trainer.test_acc_list, marker='s', label='test', markevery=2)
 plt.xlabel("epochs")
 plt.ylabel("accuracy")
-plt.ylim(0, 1.0)
+plt.ylim(0.6, 1.0)
 plt.legend(loc='lower right')
 plt.show()
 

@@ -41,12 +41,12 @@ class Trainer:
         batch_mask = np.random.choice(self.train_size, self.batch_size)
         x_batch = np.array(self.x_train[batch_mask])
         t_batch = cp.array(self.t_train[batch_mask])
-        if self.max_iter % 2 == 1:
-            x_batch = x_batch[:, :, :, ::-1]
+#        if self.max_iter % 2 == 1:
+#            x_batch = x_batch[:, :, :, ::-1]
 
-        padded = np.pad(x_batch, ((0, 0), (0, 0), (2, 2), (2, 2)), mode='constant')#mean
-        crops = np.random.randint(4, size=(len(x_batch), 2))
-        x_batch = cp.array([padded[i, :, c[0]:(c[0]+32), c[1]:(c[1]+32)] for i, c in enumerate(crops)])
+#        padded = np.pad(x_batch, ((0, 0), (0, 0), (2, 2), (2, 2)), mode='constant')#mean
+#        crops = np.random.randint(4, size=(len(x_batch), 2))
+#        x_batch = cp.array([padded[i, :, c[0]:(c[0]+32), c[1]:(c[1]+32)] for i, c in enumerate(crops)])
         grads = self.network.gradient(x_batch, t_batch)
         self.optimizer.update(self.network.params, grads)
         
