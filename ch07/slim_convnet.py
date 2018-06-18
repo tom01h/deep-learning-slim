@@ -36,26 +36,26 @@ class ConvNet:
 
         # レイヤの生成
         self.layers = OrderedDict()
-        self.layers['Conv1'] = Convolution(self.params['W1'], stride=1, pad=1, fill=-255)
+        self.layers['Conv1'] = Convolution8(self.params['W1'], stride=1, pad=1, fill=-255)
         self.layers['Pool1'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm1'] = LightNormalization()
         self.layers['Activ1'] = Relu()
 
-        self.layers['Conv2'] = Convolution(self.params['W2'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv2'] = Convolution8(self.params['W2'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
         self.layers['LightNorm2'] = LightNormalization()
         self.layers['Activ2'] = Relu()
 
-        self.layers['Conv3'] = Convolution(self.params['W3'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv3'] = Convolution8(self.params['W3'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
         self.layers['Pool3'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm3'] = LightNormalization()
         self.layers['Activ3'] = Relu()
 
-        self.layers['Conv4'] = Convolution(self.params['W4'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv4'] = Convolution8(self.params['W4'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
         self.layers['Pool4'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm4'] = LightNormalization()
         self.layers['Activ4'] = Relu()
 
-        self.layers['Conv5'] = Convolution(self.params['W5'], stride=1, pad=0, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv5'] = Convolution8(self.params['W5'], stride=1, pad=0, fill=0) # BinActiv<=1 , other<=0
         self.layers['LightNorm5'] = LightNormalization()
         self.layers['Activ5'] = Relu()
 
