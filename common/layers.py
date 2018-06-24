@@ -23,6 +23,25 @@ class BinActiv:
         return dx
 
 
+class Relu8:
+    def __init__(self):
+        self.mask = None
+
+    def forward(self, x):
+        self.mask = (x <= 0)
+        out = cp.array(x*16, dtype=np.int8)
+        out[(x*16>=127)] = 127
+        out[self.mask] = 0
+
+        return out
+
+    def backward(self, dout):
+        dout[self.mask] = 0
+        dx = dout*64
+
+        return dx
+
+
 class Relu:
     def __init__(self):
         self.mask = None
@@ -71,6 +90,39 @@ class BinAffine:
         dx = cp.dot(dout, self.bW)
         self.dW = cp.dot(self.x.T, dout)
 #        self.db = cp.sum(dout, axis=0)
+
+        dx = dx.reshape(*self.original_x_shape)  # 入力データの形状に戻す（テンソル対応）
+        return dx
+
+
+class Affine8:
+    def __init__(self, W):
+        self.W =W
+
+        self.x = None
+        self.coef = None
+        self.W8 = None
+        self.original_x_shape = None
+        # 重み・バイアスパラメータの微分
+        self.dW = None
+
+    def forward(self, x):
+        # テンソル対応
+        self.original_x_shape = x.shape
+        x = x.reshape(x.shape[0], -1)
+        self.x = x
+
+        coef = 1/cp.amax(cp.absolute(self.W))*127
+        W8 = cp.array(self.W*coef, dtype=np.int8)
+        out = cp.dot(self.x, W8)/coef
+
+        self.coef=coef
+        self.W8 = W8
+        return out
+
+    def backward(self, dout):
+        dx = cp.dot(dout, self.W8.T)/self.coef
+        self.dW = cp.dot(self.x.T, dout)
 
         dx = dx.reshape(*self.original_x_shape)  # 入力データの形状に戻す（テンソル対応）
         return dx
