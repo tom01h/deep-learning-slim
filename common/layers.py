@@ -24,20 +24,21 @@ class BinActiv:
 
 
 class Relu8:
-    def __init__(self):
+    def __init__(self, fix=16):
         self.mask = None
+        self.fix = fix
 
     def forward(self, x):
-        self.mask = (x <= 0)
-        out = cp.array(x*16, dtype=np.int8)
-        out[(x*16>=127)] = 127
-        out[self.mask] = 0
+        self.mask = (x <= 0) | (x*self.fix >= 127)
+        out = cp.array(x*self.fix, dtype=np.int8)
+        out[(x*self.fix>=127)] = 127
+        out[(x <= 0)] = 0
 
         return out
 
     def backward(self, dout):
         dout[self.mask] = 0
-        dx = dout*64
+        dx = dout*self.fix
 
         return dx
 

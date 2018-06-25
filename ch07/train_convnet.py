@@ -27,7 +27,7 @@ network = ConvNet(input_dim=(3,32,32), weight_init_std=0.01)
                         
 trainer = Trainer(network, x_train, t_train, x_test, t_test,
                   epochs=max_epochs, mini_batch_size=100,
-                  optimizer='Adam', optimizer_param={'lr': 0.0005}, #bc0.0003, real0.0003, 8bit0.0005
+                  optimizer='Adam', optimizer_param={'lr': 0.001}, #bc0.0003, real0.0003, 8bit0.0005
                   evaluate_sample_num_per_epoch=1000)
 start = time.time()
 trainer.train()
