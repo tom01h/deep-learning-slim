@@ -36,7 +36,7 @@ class ConvNet:
 
         # レイヤの生成
         self.layers = OrderedDict()
-        self.layers['Conv1'] = Convolution8(self.params['W1'], stride=1, pad=1, fill=-255)
+        self.layers['Conv1'] = Convolution8(self.params['W1'], stride=1, pad=1, fill=-128)
         self.layers['Pool1'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm1'] = LightNormalization()
         self.layers['Activ1'] = Relu8()

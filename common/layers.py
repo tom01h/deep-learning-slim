@@ -24,7 +24,7 @@ class BinActiv:
 
 
 class Relu8:
-    def __init__(self, fix=16):
+    def __init__(self, fix=32):
         self.mask = None
         self.fix = fix
 
@@ -97,8 +97,9 @@ class BinAffine:
 
 
 class Affine8:
-    def __init__(self, W):
+    def __init__(self, W, fix=4):
         self.W =W
+        self.fix = fix
 
         self.x = None
         self.coef = None
@@ -115,7 +116,10 @@ class Affine8:
 
         coef = 1/cp.amax(cp.absolute(self.W))*127
         W8 = cp.array(self.W*coef, dtype=np.int8)
-        out = cp.dot(self.x, W8)/coef
+        out = cp.dot(self.x, W8)/coef/self.fix
+        out[(out>= (2**15-1))] =  (2**15-1)
+        out[(out<=-(2**15-1))] = -(2**15-1)
+        out = cp.array(out, dtype=np.int16)
 
         self.coef=coef
         self.W8 = W8
@@ -123,10 +127,10 @@ class Affine8:
 
     def backward(self, dout):
         dx = cp.dot(dout, self.W8.T)/self.coef
-        self.dW = cp.dot(self.x.T, dout)
+        self.dW = cp.dot(self.x.T, dout)/self.fix
 
         dx = dx.reshape(*self.original_x_shape)  # 入力データの形状に戻す（テンソル対応）
-        return dx
+        return dx/self.fix
 
 
 class Affine:
@@ -313,12 +317,13 @@ class BinConvolution:
 
 
 class Convolution8:
-    def __init__(self, W, stride=1, pad=0, fill=0):
+    def __init__(self, W, stride=1, pad=0, fill=0, fix=4):
         self.W = W
 #        self.b = b
         self.stride = stride
         self.pad = pad
         self.fill = fill
+        self.fix = fix
 
         # 中間データ（backward時に使用）
         self.x = None
@@ -341,7 +346,10 @@ class Convolution8:
         coef = 1/cp.amax(cp.absolute(col_W))*127
         col_W8 = cp.array(col_W*coef, dtype=np.int8)
 
-        out = cp.dot(col, col_W8) #+ self.b
+        out = cp.dot(col, col_W8)/self.fix #+ self.b
+        out[(out>= (2**15-1))] =  (2**15-1)
+        out[(out<=-(2**15-1))] = -(2**15-1)
+        out = cp.array(out, dtype=np.int16)
         out = out.reshape(N, out_h, out_w, -1).transpose(0, 3, 1, 2)
 
         self.x = x
@@ -357,12 +365,12 @@ class Convolution8:
 
 #        self.db = cp.sum(dout, axis=0)
         self.dW = cp.dot(self.col.T, dout)*self.coef
-        self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)
+        self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)/self.fix
 
         dcol = cp.dot(dout, self.col_W.T)
         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
 
-        return dx
+        return dx/self.fix
 
 
 class Convolution:

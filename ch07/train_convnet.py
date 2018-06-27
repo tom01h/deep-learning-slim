@@ -13,8 +13,8 @@ from common.trainer import Trainer
 # データの読み込み
 (x_train, t_train), (x_test, t_test) = load_cifar10(normalize=False, flatten=False, one_hot_label=True)
 
-x_train = x_train * 2.0 - 255
-x_test = x_test * 2.0 - 255
+x_train = np.array(x_train, dtype=np.int16) - 128
+x_test = np.array(x_test, dtype=np.int16) - 128
 
 if os.path.exists("ttarray.pkl"):
     with open("ttarray.pkl", 'rb') as f:
