@@ -2,9 +2,8 @@
 import sys, os
 sys.path.append(os.pardir)  # 親ディレクトリのファイルをインポートするための設定
 import pickle
-import cupy as cp
-#import numpy as cp
-import numpy as np
+from common.np import *  # import numpy as np
+from common.config import GPU
 from collections import OrderedDict
 from common.layers import *
 
@@ -16,52 +15,52 @@ class ConvNet:
 
         # 重みの初期化
         self.params = {}
-        self.params['W1'] = cp.array( weight_init_std * \
-                            cp.random.randn(32, 3, 3, 3), dtype=np.float32)
+        self.params['W1'] = np.array( weight_init_std * \
+                            np.random.randn(32, 3, 3, 3), dtype=np.float32)
 
-        self.params['W2'] = cp.array( weight_init_std * \
-                            cp.random.randn(64, 32, 3, 3), dtype=np.float32)
+        self.params['W2'] = np.array( weight_init_std * \
+                            np.random.randn(64, 32, 3, 3), dtype=np.float32)
 
-        self.params['W3'] = cp.array( weight_init_std * \
-                            cp.random.randn(128, 64, 3 ,3), dtype=np.float32)
+        self.params['W3'] = np.array( weight_init_std * \
+                            np.random.randn(128, 64, 3 ,3), dtype=np.float32)
 
-        self.params['W4'] = cp.array( weight_init_std * \
-                            cp.random.randn(128, 128, 3, 3), dtype=np.float32)
+        self.params['W4'] = np.array( weight_init_std * \
+                            np.random.randn(128, 128, 3, 3), dtype=np.float32)
 
-        self.params['W5'] = cp.array( weight_init_std * \
-                            cp.random.randn(256, 128, 1, 1), dtype=np.float32)
+        self.params['W5'] = np.array( weight_init_std * \
+                            np.random.randn(256, 128, 1, 1), dtype=np.float32)
 
-        self.params['W6'] = cp.array( weight_init_std * \
-                            cp.random.randn(256, 10), dtype=np.float32)
+        self.params['W6'] = np.array( weight_init_std * \
+                            np.random.randn(256, 10), dtype=np.float32)
 
         # レイヤの生成
         self.layers = OrderedDict()
-        self.layers['Conv1'] = Convolution8(self.params['W1'], stride=1, pad=1, fill=-128)
+        self.layers['Conv1'] = Convolution(self.params['W1'], stride=1, pad=1, fill=0)
         self.layers['Pool1'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm1'] = LightNormalization()
-        self.layers['Activ1'] = Relu8()
+        self.layers['Activ1'] = Relu()
 
-        self.layers['Conv2'] = Convolution8(self.params['W2'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv2'] = Convolution(self.params['W2'], stride=1, pad=1, fill=0)
         self.layers['LightNorm2'] = LightNormalization()
-        self.layers['Activ2'] = Relu8()
+        self.layers['Activ2'] = Relu()
 
-        self.layers['Conv3'] = Convolution8(self.params['W3'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv3'] = Convolution(self.params['W3'], stride=1, pad=1, fill=0)
         self.layers['Pool3'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm3'] = LightNormalization()
-        self.layers['Activ3'] = Relu8()
+        self.layers['Activ3'] = Relu()
 
-        self.layers['Conv4'] = Convolution8(self.params['W4'], stride=1, pad=1, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv4'] = Convolution(self.params['W4'], stride=1, pad=1, fill=0)
         self.layers['Pool4'] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers['LightNorm4'] = LightNormalization()
-        self.layers['Activ4'] = Relu8()
+        self.layers['Activ4'] = Relu()
 
-        self.layers['Conv5'] = Convolution8(self.params['W5'], stride=1, pad=0, fill=0) # BinActiv<=1 , other<=0
+        self.layers['Conv5'] = Convolution(self.params['W5'], stride=1, pad=0, fill=0)
         self.layers['LightNorm5'] = LightNormalization()
-        self.layers['Activ5'] = Relu8()
+        self.layers['Activ5'] = Relu()
 
         self.layers['Pool'] = AvgPooling(pool_h=4, pool_w=4, stride=4)
 
-        self.layers['Affine6'] = Affine8(self.params['W6'])
+        self.layers['Affine6'] = Affine(self.params['W6'])
 
         self.last_layer = SoftmaxWithLoss()
 
@@ -82,7 +81,7 @@ class ConvNet:
         return self.last_layer.forward(y, t)
 
     def accuracy(self, x, t, batch_size=100):
-        if t.ndim != 1 : t = cp.argmax(t, axis=1)
+        if t.ndim != 1 : t = np.argmax(t, axis=1)
         
         acc = 0.0
         
@@ -90,9 +89,11 @@ class ConvNet:
             tx = x[i*batch_size:(i+1)*batch_size]
             tt = t[i*batch_size:(i+1)*batch_size]
             y = self.predict(tx, train_flg=False)
-            y = cp.argmax(y, axis=1)
-            acc += cp.sum(y == tt).get() #cupy
-#            acc += cp.sum(y == tt) #numpy
+            y = np.argmax(y, axis=1)
+            if GPU:
+                acc += np.sum(y == tt).get()
+            else:
+                acc += np.sum(y == tt)
         
         return acc / x.shape[0]
 
@@ -148,7 +149,7 @@ class ConvNet:
             if "W" in key:
                 self.params[key] = val
         for i, key in enumerate(['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Affine6']):
-            self.layers[key].W = cp.array(self.params['W' + str(i+1)])
+            self.layers[key].W = np.array(self.params['W' + str(i+1)])
         for i, key in enumerate(['LightNorm1', 'LightNorm2', 'LightNorm3', 'LightNorm4', 'LightNorm5']):
-            self.layers[key].running_var = cp.array(params['var' + str(i+1)])
-            self.layers[key].running_mean= cp.array(params['mean' + str(i+1)])
+            self.layers[key].running_var = np.array(params['var' + str(i+1)])
+            self.layers[key].running_mean= np.array(params['mean' + str(i+1)])

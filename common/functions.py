@@ -1,17 +1,16 @@
 # coding: utf-8
-import cupy as cp
-#import numpy as cp
-import numpy as np
+from common.np import *  # import numpy as np
+from common.config import GPU
 
 def softmax(x):
     if x.ndim == 2:
         x = x.T
-        x = x - cp.max(x, axis=0)
-        y = cp.exp(x, dtype=np.float32) / cp.sum(cp.exp(x, dtype=np.float32), axis=0, dtype=np.float32)
+        x = x - np.max(x, axis=0)
+        y = np.exp(x, dtype=np.float32) / np.sum(np.exp(x, dtype=np.float32), axis=0, dtype=np.float32)
         return y.T 
 
-    x = x - cp.max(x) # オーバーフロー対策
-    return cp.exp(x) / cp.sum(cp.exp(x))
+    x = x - np.max(x) # オーバーフロー対策
+    return np.exp(x) / np.sum(np.exp(x))
 
 
 def cross_entropy_error(y, t):
@@ -24,7 +23,7 @@ def cross_entropy_error(y, t):
         t = t.argmax(axis=1)
              
     batch_size = y.shape[0]
-    return -cp.sum(cp.log(y[cp.arange(batch_size), t])) / batch_size
+    return -np.sum(np.log(y[np.arange(batch_size), t])) / batch_size
 
 
 def softmax_loss(X, t):

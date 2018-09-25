@@ -1,9 +1,11 @@
 # coding: utf-8
 import sys, os
 sys.path.append(os.pardir)  # 親ディレクトリのファイルをインポートするための設定
+import numpy as np
+from common import config
+#config.GPU = True
 import pickle
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 from dataset.cifar10 import load_cifar10
 #from simple_convnet import ConvNet
@@ -11,10 +13,7 @@ from slim_convnet import ConvNet
 from common.trainer import Trainer
 
 # データの読み込み
-(x_train, t_train), (x_test, t_test) = load_cifar10(normalize=False, flatten=False, one_hot_label=True)
-
-x_train = np.array(x_train, dtype=np.int16) - 128
-x_test = np.array(x_test, dtype=np.int16) - 128
+(x_train, t_train), (x_test, t_test) = load_cifar10(normalize=True, flatten=False, one_hot_label=True)
 
 if os.path.exists("ttarray.pkl"):
     with open("ttarray.pkl", 'rb') as f:
@@ -27,7 +26,7 @@ network = ConvNet(input_dim=(3,32,32), weight_init_std=0.01)
                         
 trainer = Trainer(network, x_train, t_train, x_test, t_test,
                   epochs=max_epochs, mini_batch_size=100,
-                  optimizer='Adam', optimizer_param={'lr': 0.001}, #bc0.0003, real0.0003, 8bit0.0005
+                  optimizer='Adam', optimizer_param={'lr': 0.0002},
                   evaluate_sample_num_per_epoch=1000)
 start = time.time()
 trainer.train()

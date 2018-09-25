@@ -2,9 +2,8 @@
 import sys, os
 sys.path.append(os.pardir)  # 親ディレクトリのファイルをインポートするための設定
 import pickle
-import cupy as cp
-#import numpy as cp
-import numpy as np
+from common.np import *  # import numpy as np
+from common.config import GPU
 from dataset.cifar10 import load_cifar10
 from slim_convnet import ConvNet
 from common.functions import *
